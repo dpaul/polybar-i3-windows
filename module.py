@@ -10,7 +10,7 @@ from time import sleep
 from icon_resolver import IconResolver
 
 #: Max length of single window title
-MAX_LENGTH = 26
+MAX_LENGTH = 32
 #: Base 1 index of the font that should be used for icons
 ICON_FONT = 3
 
@@ -44,6 +44,8 @@ icon_resolver = IconResolver(ICONS)
 
 
 def main():
+    # print("%{U#ff0000}%{+u}HELLO!%{-u}%{U-}")
+    # return
     i3 = i3ipc.Connection()
 
     i3.on('workspace::focus', on_change)
@@ -65,21 +67,22 @@ def on_change(i3, e):
 
 def render_apps(i3):
     tree = i3.get_tree()
-    apps = tree.leaves()
-    apps.sort(key=lambda app: app.workspace().name)
+    focused = tree.find_focused()
+    apps = [app for app in tree.leaves() if app.name is not None and app.workspace() == focused.workspace()]
+    #apps.sort(key=lambda app: app.workspace().name)
 
-    out = '%{O12}'.join(format_entry(app) for app in apps)
+    out = '%{O12}|%{O12}'.join(format_entry(app) for app in apps)
 
     print(out, flush=True)
 
 
 def format_entry(app):
-    title = make_title(app)
-    u_color = '#b4619a' if app.focused else\
-        '#e84f4f' if app.urgent else\
-        '#404040'
-
-    return '%%{u%s} %s %%{u-}' % (u_color, title)
+    title =  make_title(app)
+    u_color = '#b4619a' if app.focused else '#e84f4f' if app.urgent else None
+    if u_color:
+        return '%%{U%s}%%{+u} %s %%{-u}' % (u_color, title)
+    else:
+        return ' ' + title + ' '
 
 
 def make_title(app):
@@ -88,7 +91,7 @@ def make_title(app):
     if app.focused:
         out = '%{F#fff}' + out + '%{F-}'
 
-    return '%%{A1:%s %s:}%s%%{A-}' % (COMMAND_PATH, app.id, out)
+    return '%%{A1:%s %s:}%s%%{A}' % (COMMAND_PATH, app.id, out)
 
 
 def get_prefix(app):
@@ -96,8 +99,9 @@ def get_prefix(app):
         'class': app.window_class,
         'name': app.name,
     })
+    return icon
 
-    return ('%%{T%s}%s%%{T-}' % (ICON_FONT, icon))
+    #return ('%%{T%s}%s%%{T-}' % (ICON_FONT, icon))
 
 
 def format_title(app):
