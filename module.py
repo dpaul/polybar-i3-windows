@@ -10,7 +10,7 @@ from time import sleep
 from icon_resolver import IconResolver
 
 #: Max length of single window title
-MAX_LENGTH = 32
+MAX_LENGTH = 48
 #: Base 1 index of the font that should be used for icons
 ICON_FONT = 3
 
@@ -20,19 +20,19 @@ USER = getpass.getuser()
 ICONS = [
     ('class=*.slack.com', '\uf3ef'),
 
-    ('class=Chromium', '\ue743'),
+    ('class=Google-chrome', '\ue743'),
     ('class=Firefox', '\uf738'),
-    ('class=URxvt', '\ue795'),
+    ('class=St', '\ue795'),
     ('class=Code', '\ue70c'),
     ('class=code-oss-dev', '\ue70c'),
 
     ('name=mutt', '\uf199'),
 
-    ('*', '\ufaae'),
+    ('*', ''),
 ]
 
 FORMATERS = {
-    'Chromium': lambda title: title.replace(' - Chromium', ''),
+    'Chromium': lambda title: title.replace(' - Google Chrome', ''),
     'Firefox': lambda title: title.replace(' - Mozilla Firefox', ''),
     'URxvt': lambda title: title.replace('%s@%s: ' % (USER, HOSTNAME), ''),
 }
@@ -44,8 +44,6 @@ icon_resolver = IconResolver(ICONS)
 
 
 def main():
-    # print("%{U#ff0000}%{+u}HELLO!%{-u}%{U-}")
-    # return
     i3 = i3ipc.Connection()
 
     i3.on('workspace::focus', on_change)
@@ -80,9 +78,9 @@ def format_entry(app):
     title =  make_title(app)
     u_color = '#b4619a' if app.focused else '#e84f4f' if app.urgent else None
     if u_color:
-        return '%%{U%s}%%{+u} %s %%{-u}' % (u_color, title)
+        return F'%{{U{u_color}}}%{{+u}} {title} %{{-u}}'
     else:
-        return ' ' + title + ' '
+        return F' {title} '
 
 
 def make_title(app):
@@ -99,7 +97,7 @@ def get_prefix(app):
         'class': app.window_class,
         'name': app.name,
     })
-    return icon
+    return icon + ' '
 
     #return ('%%{T%s}%s%%{T-}' % (ICON_FONT, icon))
 
